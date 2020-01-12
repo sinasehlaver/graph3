@@ -11,22 +11,24 @@
 #include <jpeglib.h>
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
+#include "glm/gtx/string_cast.hpp"
 #include <fstream>
 #define DEBUG 1
 
 const GLuint WIDTH = 800, HEIGHT = 600;
-
-
 
 GLuint program;
 
 GLuint idProgramShader;
 GLuint idFragmentShader;
 GLuint idVertexShader;
-GLuint idJpegTexture;
+
+GLuint colorTexture;
+GLuint heightTexture;
+
 GLuint idMVPMatrix;
 
-int widthTexture, heightTexture;
+int vertexCount, textureWidth, textureHeight;
 
 /***********************Variables defined by me *****************************/
 
@@ -54,12 +56,7 @@ GLfloat far = 1000;
 
 GLfloat heightFactor = 10.0f;
 
-GLfloat vertices[] =
-        {
-                -0.6f, -0.4f, 0.0f,
-                0.6f, -0.4f, 0.0f,
-                0.f,  0.6f, 0.0f
-        };
+glm::vec3* vertices;
 
 void myPrint( const char* toprint ){
     if(DEBUG)
@@ -120,7 +117,7 @@ void initShaders()
 }
 
 
-void initTexture(char *filename,int *w, int *h)
+void initTexture(char *filename, int textureType, int *w, int *h)
 {
     int width, height;
 
@@ -172,9 +169,23 @@ void initTexture(char *filename,int *w, int *h)
     height = cinfo.image_height;
     width = cinfo.image_width;
 
-    glGenTextures(1,&idJpegTexture);
-    glBindTexture(GL_TEXTURE_2D, idJpegTexture);
-    glActiveTexture(GL_TEXTURE0);
+
+    if (textureType == 0){
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, colorTexture);
+
+        GLint colorTextLocation = glGetUniformLocation(program, "colorTexture");
+        glUniform1i(colorTextLocation, 0);
+
+    }
+    else{
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, heightTexture);
+
+        GLint heightTextLocation = glGetUniformLocation(program, "heightTexture");
+        glUniform1i(heightTextLocation, 1);
+    }
+    
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, raw_image);
 
     *w = width;
@@ -200,6 +211,45 @@ void renderFragments(){
     float sinVal = sin( (float) glfwGetTime() ) / 2.0f;
     int colorLocation = glGetUniformLocation( program, "ourColor" );
     glUniform4f( colorLocation, sinVal, 0.0f, 0.5f, 1.0f);
+
+}
+
+void createWorld(){
+
+    vertexCount = 6*textureHeight*textureWidth;
+
+    vertices = new glm::vec3[vertexCount];
+
+    int index = 0;
+
+    for (int i = 0; i < textureWidth; i++)
+    {
+        for (int j = 0; j < textureHeight; j++)
+           {
+                //first one
+
+                vertices[index] = glm::vec3( (float)i, 0.0f, (float) j );                       //0
+                //std::cout << glm::to_string(vertices[index]) << std::endl;
+                vertices[index+1] = glm::vec3( (float)(i+1), 0.0f, (float) (j+1) );             //1
+                //std::cout << glm::to_string(vertices[index+1]) << std::endl;                 
+                vertices[index+2] = glm::vec3( (float)(i+1), 0.0f, (float) j );                 //2
+                //std::cout << glm::to_string(vertices[index+2]) << std::endl; 
+                
+                //second one
+
+                vertices[index+3] = glm::vec3( (float)i, 0.0f, (float) (j+1) );                 //3
+                //std::cout << glm::to_string(vertices[index+3]) << std::endl; 
+                vertices[index+4] = glm::vec3( (float)i, 0.0f, (float) j );                     //0
+                //std::cout << glm::to_string(vertices[index+4]) << std::endl; 
+                vertices[index+5] = glm::vec3( (float)(i+1), 0.0f, (float) (j+1) );             //1
+                //std::cout << glm::to_string(vertices[index+5]) << std::endl; 
+
+                index += 6;
+
+           } 
+    }
+
+    
 
 }
 
@@ -238,26 +288,30 @@ int main()
         return EXIT_FAILURE;
     }
 
+    glfwSwapInterval(1);                    //60 fps
 
-    glfwSwapInterval(1);// 60 fps
-
-    initShaders();              // Shader initialisation
+    initShaders();                          //Shader initialisation
 
     glGenVertexArrays(1, &VAO);             //VERTEX ARRAY
 
     glGenBuffers(1, &VBO);                  //VERTEX BUFFER
 
+    textureWidth = 1;
+    textureHeight = 1;
+
+    createWorld();                          //CREATE THE VERTICES
 
     glBindVertexArray(VAO);
+
+    std::cout<< vertexCount << std::endl;
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);//Introduce the vertices to the buffer
 
 
     //Introduce vertice info
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 3, (GLvoid *) nullptr);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * vertexCount, (GLvoid *) nullptr);
     glEnableVertexAttribArray(0); // Used for switching between vertex arrays
-
 
     /*
 
@@ -267,8 +321,21 @@ int main()
 
     */
 
+    /*
 
+    glGenTextures(1,&colorTexture);
+    glGenTextures(1,&heightTexture);
 
+    initTexture( (char *) "height_gray_mini.jpg", 1, &textureWidth, &textureHeight ); // HEIGHT
+    initTexture( (char *) "normal_earth_mini.jpg", 0, &textureWidth, &textureHeight ); // COLOR
+
+    */
+
+    GLint textWidthLocation = glGetUniformLocation(program, "textureWidth");
+    glUniform1i(textWidthLocation, textureWidth);
+
+    GLint textHeightLocation = glGetUniformLocation(program, "textureHeight");
+    glUniform1i(textHeightLocation, textureHeight);
 
     while ( !glfwWindowShouldClose( window ) )
     {
@@ -282,17 +349,18 @@ int main()
         glUseProgram(program);
         glBindVertexArray(VAO);
 
-
-        renderFragments();
+        //renderFragments();
 
         /*
+        textCoord = vec2( (1 - float(position.x) / (textureWidth + 1 ) ), (1 - float(position.z) / (textureHeight + 1 ) ) );
         glm::mat4x4 m = glm::mat4();
         glm::rotate(m,(float) glfwGetTime(), glm::vec3(0,0,1) );
         glm::mat4x4 p = glm::ortho( -ratio, ratio, -1.f, 1.f, 1.f, -1.f);
         glm::mat4x4 mvp = glm::matrixCompMult(p,m);
         glUniformMatrix4fv(mvp_location, 1, GL_FALSE, (const GLfloat*) &mvp[0][0]);
         */
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+
+        glDrawArrays(GL_TRIANGLES, 0, vertexCount);
         glBindVertexArray(0);
         glfwSwapBuffers(window);
         glfwPollEvents();
