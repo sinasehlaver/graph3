@@ -7,8 +7,10 @@
 // GLFW
 #include <GLFW/glfw3.h>
 #include "glm/mat4x4.hpp"
+#include "glm/glm.hpp"
 #include <jpeglib.h>
 #include "glm/gtc/matrix_transform.hpp"
+#include "glm/gtc/type_ptr.hpp"
 #include <fstream>
 #define DEBUG 1
 
@@ -189,6 +191,19 @@ void initTexture(char *filename,int *w, int *h)
 }
 
 
+void renderFragments(){
+
+    glm::mat4 m = glm::mat4();
+    m = glm::rotate(m,(float) glfwGetTime(), glm::vec3(0,0,1) );
+    int matrixLocation = glGetUniformLocation( program, "rMat" );
+    glUniformMatrix4fv( matrixLocation, 1, GL_FALSE, glm::value_ptr(m) );
+    float sinVal = sin( (float) glfwGetTime() ) / 2.0f;
+    int colorLocation = glGetUniformLocation( program, "ourColor" );
+    glUniform4f( colorLocation, sinVal, 0.0f, 0.5f, 1.0f);
+
+}
+
+
 int main()
 {
 
@@ -228,18 +243,32 @@ int main()
 
     initShaders();              // Shader initialisation
 
-    glGenVertexArrays(1, &VAO); // Vertex Array
-    glGenBuffers(1, &VBO);      // Vertex Buffer
+    glGenVertexArrays(1, &VAO);             //VERTEX ARRAY
+
+    glGenBuffers(1, &VBO);                  //VERTEX BUFFER
+
 
     glBindVertexArray(VAO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
 
-    //Introduce the vertices to the buffer
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);//Introduce the vertices to the buffer
+
+
     //Introduce vertice info
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 3, (GLvoid *) nullptr);
-
     glEnableVertexAttribArray(0); // Used for switching between vertex arrays
+
+
+    /*
+
+    //Introduce vertice attrib 2 info
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 6, (GLvoid *) (3*sizeof(GLfloat)) ));
+    glEnableVertexAttribArray(1); // Used for switching between vertex arrays
+
+    */
+
+
+
 
     while ( !glfwWindowShouldClose( window ) )
     {
@@ -252,6 +281,10 @@ int main()
 
         glUseProgram(program);
         glBindVertexArray(VAO);
+
+
+        renderFragments();
+
         /*
         glm::mat4x4 m = glm::mat4();
         glm::rotate(m,(float) glfwGetTime(), glm::vec3(0,0,1) );

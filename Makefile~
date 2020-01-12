@@ -1,0 +1,8 @@
+linux:
+	g++ -o main main.cpp -lX11 -lGL -lm -lXrandr -lXi -lXxf86vm -lglfw3 -lpthread -ldl -lXinerama -lXcursor
+
+unix:	
+	g++ -g -o main main.cpp -lglfw -lglew -framework OpenGL
+
+clean:
+	rm -rf *.o
