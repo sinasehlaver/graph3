@@ -7,6 +7,7 @@
 // GLFW
 #include <GLFW/glfw3.h>
 #include "glm/mat4x4.hpp"
+#include <jpeglib.h>
 #include "glm/gtc/matrix_transform.hpp"
 #include <fstream>
 #define DEBUG 1
@@ -46,22 +47,21 @@ GLuint loadShader(const GLchar* file_name, GLenum type) {
 
 void initShaders()
 {
-    GLchar *vsSource, *fsSource;
     GLuint vs,fs;
     program = glCreateProgram();
     vs = loadShader("sample.vs", GL_VERTEX_SHADER);
     fs = loadShader("sample.fs", GL_FRAGMENT_SHADER);
-    GLint success;
+    GLint status;
     GLchar infoLog[512];
-    glGetShaderiv( vs , GL_COMPILE_STATUS, &success);
-    if( !success ){
-        glGetShaderInfoLog(vs,512,NULL,infoLog);
+    glGetShaderiv( vs , GL_COMPILE_STATUS, &status);
+    if( !status ){
+        glGetShaderInfoLog(vs,512,nullptr,infoLog);
         myPrint("ERROR::SHADER::VERTEX::COMPILE");
         myPrint(infoLog);
     }
-    glGetShaderiv( fs , GL_COMPILE_STATUS, &success);
-    if( !success ){
-        glGetShaderInfoLog(fs,512,NULL,infoLog);
+    glGetShaderiv( fs , GL_COMPILE_STATUS, &status);
+    if( !status ){
+        glGetShaderInfoLog(fs,512,nullptr,infoLog);
         myPrint("ERROR::SHADER::FRAGMENT::COMPILE");
         myPrint(infoLog);
 
@@ -69,15 +69,86 @@ void initShaders()
     glAttachShader(program,vs);
     glAttachShader(program,fs);
     glLinkProgram(program);
-    glGetProgramiv(program, GL_LINK_STATUS, &success);
-    if ( !success ){
-        glGetShaderInfoLog(program,512,NULL,infoLog);
+    glGetProgramiv(program, GL_LINK_STATUS, &status);
+    if ( !status ){
+        glGetShaderInfoLog(program,512,nullptr,infoLog);
         myPrint("ERROR::SHADER::PROGRAM");
         myPrint(infoLog);
 
     }
     glDeleteShader(vs);
     glDeleteShader(fs);
+
+}
+
+
+void initTexture(char *filename,int *w, int *h)
+{
+    int width, height;
+
+    unsigned char *raw_image = nullptr;
+    int bytes_per_pixel = 3;   /* or 1 for GRACYSCALE images */
+    int color_space = JCS_RGB; /* or JCS_GRAYSCALE for grayscale images */
+
+    /* these are standard libjpeg structures for reading(decompression) */
+    struct jpeg_decompress_struct cinfo;
+    struct jpeg_error_mgr jerr;
+
+    /* libjpeg data structure for storing one row, that is, scanline of an image */
+    JSAMPROW row_pointer[1];
+
+    FILE *infile = fopen( filename, "rb" );
+    unsigned long location = 0;
+    int i = 0, j = 0;
+
+    if ( !infile )
+    {
+        printf("Error opening jpeg file %s\n!", filename );
+        return;
+    }
+    printf("Texture filename = %s\n",filename);
+
+    /* here we set up the standard libjpeg error handler */
+    cinfo.err = jpeg_std_error( &jerr );
+    /* setup decompression process and source, then read JPEG header */
+    jpeg_create_decompress( &cinfo );
+    /* this makes the library read from infile */
+    jpeg_stdio_src( &cinfo, infile );
+    /* reading the image header which contains image information */
+    jpeg_read_header( &cinfo, TRUE );
+    /* Start decompression jpeg here */
+    jpeg_start_decompress( &cinfo );
+
+    /* allocate memory to hold the uncompressed image */
+    raw_image = (unsigned char*)malloc( cinfo.output_width*cinfo.output_height*cinfo.num_components );
+    /* now actually read the jpeg into the raw buffer */
+    row_pointer[0] = (unsigned char *)malloc( cinfo.output_width*cinfo.num_components );
+    /* read one scan line at a time */
+    while( cinfo.output_scanline < cinfo.image_height )
+    {
+        jpeg_read_scanlines( &cinfo, row_pointer, 1 );
+        for( i=0; i<cinfo.image_width*cinfo.num_components;i++)
+            raw_image[location++] = row_pointer[0][i];
+    }
+
+    height = cinfo.image_height;
+    width = cinfo.image_width;
+
+    glGenTextures(1,&idJpegTexture);
+    glBindTexture(GL_TEXTURE_2D, idJpegTexture);
+    glActiveTexture(GL_TEXTURE0);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, raw_image);
+
+    *w = width;
+    *h = height;
+
+    glGenerateMipmap(GL_TEXTURE_2D);
+    /* wrap up decompression, destroy objects, free pointers and close open files */
+    jpeg_finish_decompress( &cinfo );
+    jpeg_destroy_decompress( &cinfo );
+    free( row_pointer[0] );
+    free( raw_image );
+    fclose( infile );
 
 }
 
@@ -116,16 +187,23 @@ int main()
         return EXIT_FAILURE;
     }
 
-    glfwSwapInterval(1);
-    initShaders();
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
+
+    glfwSwapInterval(1);// 60 fps
+
+    initShaders();              // Shader initialisation
+
+    glGenVertexArrays(1, &VAO); // Vertex Array
+    glGenBuffers(1, &VBO);      // Vertex Buffer
+
     glBindVertexArray(VAO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
+    //Introduce the vertices to the buffer
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    //Introduce vertice info
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 3, (GLvoid *) nullptr);
-    glEnableVertexAttribArray(0);
+
+    glEnableVertexAttribArray(0); // Used for switching between vertex arrays
 
     while ( !glfwWindowShouldClose( window ) )
     {
