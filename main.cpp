@@ -13,8 +13,44 @@
 #define DEBUG 1
 
 const GLuint WIDTH = 800, HEIGHT = 600;
+
+
+
 GLuint program;
 
+GLuint idProgramShader;
+GLuint idFragmentShader;
+GLuint idVertexShader;
+GLuint idJpegTexture;
+GLuint idMVPMatrix;
+
+int widthTexture, heightTexture;
+
+/***********************Variables defined by me *****************************/
+
+glm::vec3 camera_pos;
+glm::vec3 camera_up = glm::vec3(0.0, 1.0, 0.0);
+glm::vec3 camera_gaze = glm::vec3(0.0, 0.0, 1.0);
+glm::vec3 camera_cross = cross(camera_up, camera_gaze);
+
+GLfloat camera_speed = 0.0f;
+
+bool fullscreen_mode;
+
+int current_widthDisplay, current_heigthDisplay;
+
+
+GLFWmonitor* primary_monitor;
+const GLFWvidmode* vidmode;
+
+/* These four variables should have the same type due to the template argument T
+   that is used in the definition of the glm::perspective function */
+GLfloat fovy = 45; /* Set the field of view for the projection matrix */
+GLfloat aspect_ratio = 1;
+GLfloat near = 0.1;
+GLfloat far = 1000;
+
+GLfloat heightFactor = 10.0f;
 
 GLfloat vertices[] =
         {

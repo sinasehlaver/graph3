@@ -1,3 +1,3 @@
-make all
+make linux
 echo done
 ./main
