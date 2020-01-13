@@ -12,6 +12,8 @@
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
 #include "glm/gtx/string_cast.hpp"
+#include "glm/gtc/matrix_inverse.hpp"
+#include "glm/gtx/rotate_vector.hpp"
 #include <fstream>
 #define DEBUG 1
 
@@ -25,16 +27,39 @@ GLuint heightTexture;
 int vertexCount, textureWidth, textureHeight;
 
 float textureRatio;
+float heightFactor = 10.0f;
 
 glm::mat4 m = glm::mat4();
+glm::mat4 mCam, mPer, mNormInv, mVP;
+
+glm::vec3 cameraPos;
+glm::vec3 cameraUp;
+glm::vec3 cameraGaze;
+glm::vec3 cameraRight;
+glm::vec3 cameraTarget;
+glm::vec3 lightPos;
+
+float cameraSpeed = 0.0f;
+float yawChange = 0.05f;
+float pitchChange = 0.05f;
+float speedChange = 0.01f;
+float hfChange = 0.5f;
+float lightChange = 5.0f;
+
+int textureOffset = 0;
+int textureChange = 1;
+
+bool fsRender;
+bool flag = false;
+
+GLFWwindow *window;
+
+int windowWidth, windowHeight;
 
 
-glm::vec3 camera_pos;
-glm::vec3 camera_up = glm::vec3(0.0, 1.0, 0.0);
-glm::vec3 camera_gaze = glm::vec3(0.0, 0.0, 1.0);
-glm::vec3 camera_cross = cross(camera_up, camera_gaze);
+GLFWmonitor* monitor;
+const GLFWvidmode* mode;
 
-GLfloat heightFactor = 10.0f;
 
 glm::vec3* vertices;
 
@@ -191,62 +216,58 @@ void initTexture(char *filename, int textureType, int *w, int *h)
 }
 
 
-void rotateX(float deg){
-    glUseProgram(program);
-    m = glm::rotate( glm::mat4(1.0f), glm::radians(deg), glm::vec3( 1.0f, 0.0f, 0.0f ) ) * m ;
-}
-
-void rotateY(float deg){
-    glUseProgram(program);
-    m = glm::rotate( glm::mat4(1.0f), glm::radians(deg), glm::vec3(  0.0f, 1.0f,0.0f ) ) * m ;
-}
-
-void rotateZ(float deg){
-    glUseProgram(program);
-    m = glm::rotate( glm::mat4(1.0f), glm::radians(deg), glm::vec3(  0.0f, 0.0f,1.0f ) ) * m ;
-}
-
-
-void translate( float x, float y, float z ){
-    glUseProgram(program);
-    m = glm::translate( glm::mat4(1.0f), glm::vec3( x, y, z) ) * m;
-}
-
-void scale(float x, float y, float z){
-    glUseProgram(program);
-    m = glm::scale(m, glm::vec3( x,y,z ) );
-
-}
-
 void viewConfig(){
-    glUseProgram(program);
+    cameraGaze = glm::vec3(0.0f,0.0f,1.0f);
 
-    rotateX(-90.0f);
+    cameraPos = glm::vec3(textureWidth/2, textureWidth/10, -textureWidth/4);
 
-    translate( -0.5f, -0.5f, -2.0f);
+    cameraUp = glm::vec3(0.0f,1.0f,0.0f);
 
-    scale(1/ float(textureWidth), 1/float(textureHeight), 1.0f);
+    cameraTarget = cameraPos + cameraGaze*(0.1f) ;
 
-    
+    cameraRight = glm::cross( cameraGaze, cameraUp );
 
-    //translate(-0.5f, 0.0f, 0.0f);
-    //translate(0.0f, -0.05f, -1.0f);
+    mCam = glm::lookAt( cameraPos, cameraTarget, cameraUp ) ;
 
+    mNormInv = glm::inverseTranspose(mCam);
 
-
-
-    m = glm::perspective(glm::radians(45.0f),1.0f,0.1f,1000.f) * m;
+    mVP = mPer * mCam;
     
 }
 
-void renderFragments(){
+void updateCamera(){
+    
+    cameraPos += cameraSpeed*cameraGaze;
 
-    float sinVal = sin( (float) glfwGetTime() ) / 5.0f;
-    int colorLocation = glGetUniformLocation( program, "ourColor" );
-    glUniform4f( colorLocation, sinVal, 0.0f, 0.5f, 1.0f);
-    int matrixLocation = glGetUniformLocation( program, "rMat" );
-    glUniformMatrix4fv( matrixLocation, 1, GL_FALSE, glm::value_ptr(m) );
+    cameraTarget = cameraPos + cameraGaze*(0.1f) ;
 
+    mCam = glm::lookAt( cameraPos, cameraTarget, cameraUp ) ;
+
+    mNormInv = glm::inverseTranspose(mCam);
+
+    mVP = mPer * mCam;
+}
+
+void updateUniforms(){
+
+    glUseProgram(program);
+
+    int location;
+
+    location = glGetUniformLocation( program, "cMat" );
+    glUniformMatrix4fv( location, 1, GL_FALSE, glm::value_ptr(mCam) );
+
+    location = glGetUniformLocation( program, "pMat" );
+    glUniformMatrix4fv( location, 1, GL_FALSE, glm::value_ptr(mPer) );
+
+    location = glGetUniformLocation( program, "nMat" );
+    glUniformMatrix4fv( location, 1, GL_FALSE, glm::value_ptr(mNormInv) );
+
+    location = glGetUniformLocation( program, "vpMat" );
+    glUniformMatrix4fv( location, 1, GL_FALSE, glm::value_ptr(mVP) );
+
+    location = glGetUniformLocation( program, "heightFactor" );
+    glUniform1f( location, heightFactor );
 }
 
 void createWorld(){
@@ -263,20 +284,20 @@ void createWorld(){
            {
                 //first one
 
-                vertices[index] = glm::vec3( i, j, 0 );                       //0
+                vertices[index] = glm::vec3( i, 0, j );                       //0
                 //std::cout << glm::to_string(vertices[index]) << std::endl;
-                vertices[index+1] = glm::vec3( (i+1), (j+1), 0  );             //1
+                vertices[index+1] = glm::vec3( (i+1), 0, (j+1) );             //1
                 //std::cout << glm::to_string(vertices[index+1]) << std::endl;                 
-                vertices[index+2] = glm::vec3( (i+1), j, 0  );                 //2
+                vertices[index+2] = glm::vec3( (i+1), 0, j);                 //2
                 //std::cout << glm::to_string(vertices[index+2]) << std::endl; 
                 
                 //second one
 
-                vertices[index+3] = glm::vec3( i, (j+1), 0  );                 //3
+                vertices[index+3] = glm::vec3( i, 0, (j+1) );                 //3
                 //std::cout << glm::to_string(vertices[index+3]) << std::endl; 
-                vertices[index+4] = glm::vec3( i, j, 0 );                     //0
+                vertices[index+4] = glm::vec3( i, 0, j);                     //0
                 //std::cout << glm::to_string(vertices[index+4]) << std::endl; 
-                vertices[index+5] = glm::vec3( (i+1), (j+1), 0  );             //1
+                vertices[index+5] = glm::vec3( (i+1), 0, (j+1));             //1
                 //std::cout << glm::to_string(vertices[index+5]) << std::endl; 
 
                 index += 6;
@@ -287,10 +308,156 @@ void createWorld(){
 }
 
 
+void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods){
+
+    bool fs = false;
+    if(action == GLFW_PRESS){
+        switch(key){
+
+            case GLFW_KEY_ESCAPE:
+            {
+                glfwSetWindowShouldClose(window, GLFW_TRUE);
+                break;
+            }
+            case GLFW_KEY_P: //fullscreen
+            {
+                fs = true;
+                break;
+            }
+            
+            case GLFW_KEY_Y://camera speed
+            {
+                cameraSpeed += speedChange;
+                break;
+            }
+            case GLFW_KEY_H:
+            {
+                cameraSpeed -= speedChange;
+                break;
+            }
+            case GLFW_KEY_X:
+            {
+                cameraSpeed = 0.0f;
+                break;
+            }
+            case GLFW_KEY_I:
+            {
+                cameraSpeed = 0.0f;
+                viewConfig();
+                break;
+            }
+        }
+    }
+
+    /*
+
+    if(fs){ //TODO
+        fs = false;
+        flag = true;
+        if(!fsRender){
+            fsRender = true;
+            windowHeight = mode->height;
+            windowWidth = mode->width;
+
+            //std::cout<<width <<" " << height<<std::endl;
+            glfwSetWindowMonitor(window, monitor,0,0,windowWidth, windowHeight, mode->refreshRate);
+
+        }
+        else{
+            fsRender = false;
+            windowHeight = heightDisplay;
+            windowWidth = widthDisplay;
+            //std::cout<<width <<" " << height<<std::endl;
+
+            glfwSetWindowMonitor(window, nullptr, 0, 0, windowWidth, windowHeight, 0);
+        }
+    }
+
+    */
+
+    if(action == GLFW_PRESS || action == GLFW_REPEAT){
+        switch(key){
+            case GLFW_KEY_W://camera gaze move
+            {
+                cameraGaze = glm::rotate(cameraGaze, pitchChange, cameraRight );
+                cameraUp = glm::rotate(cameraUp, pitchChange, cameraRight );
+                break;
+            }
+            case GLFW_KEY_A:
+            {
+                cameraGaze = glm::rotate(cameraGaze, pitchChange, cameraUp );
+                cameraRight = glm::rotate(cameraRight, pitchChange, cameraUp );
+                break;
+            }
+            case GLFW_KEY_S:
+            {
+                cameraGaze = glm::rotate(cameraGaze, -pitchChange, cameraRight );
+                cameraUp = glm::rotate(cameraUp, -pitchChange, cameraRight );
+                break;
+            }
+            case GLFW_KEY_D:
+            {
+                cameraGaze = glm::rotate(cameraGaze, -pitchChange, cameraUp );
+                cameraRight = glm::rotate(cameraRight, -pitchChange, cameraUp );
+                break;
+            }
+            case GLFW_KEY_Q: //texture map move
+            {
+                textureOffset += textureChange;
+                break;
+            }
+            case GLFW_KEY_E:
+            {
+                textureOffset -= textureChange;
+                break;
+            }
+            case GLFW_KEY_UP: //light
+            {
+                lightPos.z += lightChange;
+                break;
+            }
+            case GLFW_KEY_DOWN:
+            {
+                lightPos.z -= lightChange;
+                break;
+            }
+            case GLFW_KEY_LEFT:
+            {
+                lightPos.x -= lightChange; 
+                break;
+            }
+            case GLFW_KEY_RIGHT:
+            {
+                lightPos.x += lightChange;
+                break;
+            }
+            case GLFW_KEY_T:
+            {
+                lightPos.y += lightChange;
+                break;
+            }
+            case GLFW_KEY_G:
+            {
+                lightPos.y -= lightChange;
+                break;
+            }
+            case GLFW_KEY_R://heightfactor
+            {
+                heightFactor += hfChange;
+                break;
+            }
+            case GLFW_KEY_F:
+            {
+                heightFactor -= hfChange;
+                break;
+            }
+        }
+    }
+}
+
 int main()
 {
 
-    GLint mvp_location, vpos_location, vcol_location;
     GLuint vertex_buffer;
     GLuint VBO, VAO;
 
@@ -303,7 +470,7 @@ int main()
 
     glfwWindowHint( GLFW_RESIZABLE, GL_FALSE );
 
-    GLFWwindow *window = glfwCreateWindow( WIDTH, HEIGHT, "CENG477", nullptr, nullptr );
+    window = glfwCreateWindow( WIDTH, HEIGHT, "CENG477", nullptr, nullptr );
 
     if ( nullptr == window )
     {
@@ -321,6 +488,8 @@ int main()
         return EXIT_FAILURE;
     }
 
+    glfwSetKeyCallback(window, keyCallback);
+
     glfwSwapInterval(1);                    //60 fps
 
     initShaders();                          //Shader initialisation
@@ -336,8 +505,6 @@ int main()
     initTexture( (char *) "height_gray_mini.jpg", 1, &textureWidth, &textureHeight ); // HEIGHT
     initTexture( (char *) "normal_earth_mini.jpg", 0, &textureWidth, &textureHeight ); // COLOR
 
-    std::cout<< textureWidth << " " << textureHeight << std::endl;
-
     glfwSetWindowSize(window, HEIGHT*textureRatio, HEIGHT);
     glfwSetWindowAspectRatio(window, HEIGHT*textureRatio, HEIGHT);
 
@@ -345,11 +512,8 @@ int main()
 
     glBindVertexArray(VAO);
 
-    std::cout<< vertexCount << std::endl;
-
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * vertexCount, &vertices[0], GL_STATIC_DRAW);//Introduce the vertices to the buffer
-
 
     //Introduce vertice info
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, (void *) 0);
@@ -367,6 +531,10 @@ int main()
 
     */    
 
+    glUseProgram(program);
+
+    mPer = glm::perspective(glm::radians(45.0f),1.0f,0.1f,1000.f);
+
     viewConfig();
 
     GLint textWidthLocation = glGetUniformLocation(program, "textureWidth");
@@ -375,33 +543,24 @@ int main()
     GLint textHeightLocation = glGetUniformLocation(program, "textureHeight");
     glUniform1i(textHeightLocation, textureHeight);
 
+    monitor = glfwGetPrimaryMonitor();
+    mode = glfwGetVideoMode(monitor);
+    glfwGetWindowSize(window, &windowWidth, &windowHeight);
+
     while ( !glfwWindowShouldClose( window ) )
     {
-        float ratio;
         int width, height;
         glfwGetFramebufferSize(window, &width, &height);
-        ratio = width / (float) height;
         glViewport(0, 0, width, height);
         
-
         glClearColor(0.2f,0.2f,0.0f,1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
         glUseProgram(program);
         glBindVertexArray(VAO);
 
-
-
-        renderFragments();
-
-        /*
-        textCoord = vec2( (1 - float(position.x) / (textureWidth + 1 ) ), (1 - float(position.z) / (textureHeight + 1 ) ) );
-        glm::mat4x4 m = glm::mat4();
-        glm::rotate(m,(float) glfwGetTime(), glm::vec3(0,0,1) );
-        glm::mat4x4 p = glm::ortho( -ratio, ratio, -1.f, 1.f, 1.f, -1.f);
-        glm::mat4x4 mvp = glm::matrixCompMult(p,m);
-        glUniformMatrix4fv(mvp_location, 1, GL_FALSE, (const GLfloat*) &mvp[0][0]);
-        */
+        updateCamera();
+        updateUniforms();
 
         glDrawArrays(GL_TRIANGLES, 0, vertexCount);
         glfwSwapBuffers(window);
