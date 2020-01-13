@@ -30,7 +30,7 @@ GLuint idMVPMatrix;
 
 int vertexCount, textureWidth, textureHeight;
 
-/***********************Variables defined by me *****************************/
+float textureRatio;
 
 glm::vec3 camera_pos;
 glm::vec3 camera_up = glm::vec3(0.0, 1.0, 0.0);
@@ -196,8 +196,17 @@ void initTexture(char *filename, int textureType, int *w, int *h)
     *w = width;
     *h = height;
 
+    textureRatio = width/height;
+
     glGenerateMipmap(GL_TEXTURE_2D);
     /* wrap up decompression, destroy objects, free pointers and close open files */
+
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+
+
     jpeg_finish_decompress( &cinfo );
     jpeg_destroy_decompress( &cinfo );
     free( row_pointer[0] );
@@ -208,14 +217,18 @@ void initTexture(char *filename, int textureType, int *w, int *h)
 
 
 void viewConfig(){
+    glUseProgram(program);
     glm::mat4 m = glm::mat4();
+    m = glm::translate( m, glm::vec3( -0.5f, -0.5f, 0.0f ) );
+    m = glm::scale(m, glm::vec3( 1/ float(textureWidth), 1/float(textureHeight), 1.0f ) );
+    std::cout<<glm::to_string(m)<<std::endl;
     int matrixLocation = glGetUniformLocation( program, "rMat" );
     glUniformMatrix4fv( matrixLocation, 1, GL_FALSE, glm::value_ptr(m) );
 }
 
 void renderFragments(){
 
-    float sinVal = sin( (float) glfwGetTime() ) / 2.0f;
+    float sinVal = sin( (float) glfwGetTime() ) / 5.0f;
     int colorLocation = glGetUniformLocation( program, "ourColor" );
     glUniform4f( colorLocation, sinVal, 0.0f, 0.5f, 1.0f);
 
@@ -228,28 +241,6 @@ void createWorld(){
     vertices = new glm::vec3[vertexCount];
 
     int index = 0;
-    
-    //first one
-
-    vertices[index] = glm::vec3( -0.5f, -0.5f, 0.0f );                       //0
-    //std::cout << glm::to_string(vertices[index]) << std::endl;
-    vertices[index+1] = glm::vec3( 0.5f, 0.5f, 0.0f );             //1
-    //std::cout << glm::to_string(vertices[index+1]) << std::endl;                 
-    vertices[index+2] = glm::vec3( 0.5f, -0.5f, 0.0f );                 //2
-    //std::cout << glm::to_string(vertices[index+2]) << std::endl; 
-    
-    //second one
-    
-
-    vertices[index+3] = glm::vec3( -0.5f, 0.5f, 0.0f );                 //3
-    //std::cout << glm::to_string(vertices[index+3]) << std::endl; 
-    vertices[index+4] = glm::vec3( -0.5f, -0.5f, 0.0f );                     //0
-    //std::cout << glm::to_string(vertices[index+4]) << std::endl; 
-    vertices[index+5] = glm::vec3( 0.5f, 0.5f, 0.0f );             //1
-    //std::cout << glm::to_string(vertices[index+5]) << std::endl; 
-
-    /*
-    
 
     for (int i = 0; i < textureWidth; i++)
     {
@@ -257,56 +248,27 @@ void createWorld(){
            {
                 //first one
 
-                vertices[index] = glm::vec3( i, 0, j );                       //0
+                vertices[index] = glm::vec3( i, j, 0 );                       //0
                 //std::cout << glm::to_string(vertices[index]) << std::endl;
-                vertices[index+1] = glm::vec3( (i+1), 0, (j+1) );             //1
+                vertices[index+1] = glm::vec3( (i+1), (j+1), 0  );             //1
                 //std::cout << glm::to_string(vertices[index+1]) << std::endl;                 
-                vertices[index+2] = glm::vec3( (i+1), 0, j );                 //2
+                vertices[index+2] = glm::vec3( (i+1), j, 0  );                 //2
                 //std::cout << glm::to_string(vertices[index+2]) << std::endl; 
                 
                 //second one
 
-                vertices[index+3] = glm::vec3( i, 0, (j+1) );                 //3
+                vertices[index+3] = glm::vec3( i, (j+1), 0  );                 //3
                 //std::cout << glm::to_string(vertices[index+3]) << std::endl; 
-                vertices[index+4] = glm::vec3( i, 0, j );                     //0
+                vertices[index+4] = glm::vec3( i, j, 0 );                     //0
                 //std::cout << glm::to_string(vertices[index+4]) << std::endl; 
-                vertices[index+5] = glm::vec3( (i+1), 0, (j+1) );             //1
+                vertices[index+5] = glm::vec3( (i+1), (j+1), 0  );             //1
                 //std::cout << glm::to_string(vertices[index+5]) << std::endl; 
 
                 index += 6;
 
            } 
     }
-    */
 
-    /*
-    for (int i = 0; i < textureWidth; i++)
-    {
-        for (int j = 0; j < textureHeight; j++)
-           {
-                //first one
-
-                vertices[index] = glm::vec3( i, 0, j );                       //0
-                //std::cout << glm::to_string(vertices[index]) << std::endl;
-                vertices[index+1] = glm::vec3( (i+1), 0, (j+1) );             //1
-                //std::cout << glm::to_string(vertices[index+1]) << std::endl;                 
-                vertices[index+2] = glm::vec3( (i+1), 0, j );                 //2
-                //std::cout << glm::to_string(vertices[index+2]) << std::endl; 
-                
-                //second one
-
-                vertices[index+3] = glm::vec3( i, 0, (j+1) );                 //3
-                //std::cout << glm::to_string(vertices[index+3]) << std::endl; 
-                vertices[index+4] = glm::vec3( i, 0, j );                     //0
-                //std::cout << glm::to_string(vertices[index+4]) << std::endl; 
-                vertices[index+5] = glm::vec3( (i+1), 0, (j+1) );             //1
-                //std::cout << glm::to_string(vertices[index+5]) << std::endl; 
-
-                index += 6;
-
-           } 
-    }
-    */
 }
 
 
@@ -352,8 +314,15 @@ int main()
 
     glGenBuffers(1, &VBO);                  //VERTEX BUFFER
 
-    textureWidth = 1;
-    textureHeight = 1;
+    
+
+    glGenTextures(1,&colorTexture);
+    glGenTextures(1,&heightTexture);
+
+    initTexture( (char *) "height_gray_mini.jpg", 1, &textureWidth, &textureHeight ); // HEIGHT
+    initTexture( (char *) "normal_earth_mini.jpg", 0, &textureWidth, &textureHeight ); // COLOR
+
+    std::cout<< textureWidth << " " << textureHeight << std::endl;
 
     createWorld();                          //CREATE THE VERTICES
 
@@ -379,17 +348,7 @@ int main()
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 6, (GLvoid *) (3*sizeof(GLfloat)) ));
     glEnableVertexAttribArray(1); // Used for switching between vertex arrays
 
-    */
-
-    /*
-
-    glGenTextures(1,&colorTexture);
-    glGenTextures(1,&heightTexture);
-
-    initTexture( (char *) "height_gray_mini.jpg", 1, &textureWidth, &textureHeight ); // HEIGHT
-    initTexture( (char *) "normal_earth_mini.jpg", 0, &textureWidth, &textureHeight ); // COLOR
-
-    */
+    */    
 
     viewConfig();
 
@@ -414,7 +373,7 @@ int main()
         glUseProgram(program);
         glBindVertexArray(VAO);
 
-        //renderFragments();
+        renderFragments();
 
         /*
         textCoord = vec2( (1 - float(position.x) / (textureWidth + 1 ) ), (1 - float(position.z) / (textureHeight + 1 ) ) );

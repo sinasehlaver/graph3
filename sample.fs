@@ -9,5 +9,5 @@ uniform sampler2D colorTexture;
 
 void main()
 {
-	color = vertexColor;
+	color = texture(colorTexture , textCoord );
 }
