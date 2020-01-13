@@ -460,77 +460,48 @@ int main()
 
     GLuint vertex_buffer;
     GLuint VBO, VAO;
-
     glfwInit( );
-
     glfwWindowHint( GLFW_CONTEXT_VERSION_MAJOR, 3 );
     glfwWindowHint( GLFW_CONTEXT_VERSION_MINOR, 3 );
     glfwWindowHint( GLFW_OPENGL_PROFILE, GLFW_OPENGL_COMPAT_PROFILE );
     //glfwWindowHint( GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE );
-
     glfwWindowHint( GLFW_RESIZABLE, GL_FALSE );
-
     window = glfwCreateWindow( WIDTH, HEIGHT, "CENG477", nullptr, nullptr );
-
     if ( nullptr == window )
     {
         std::cout << "Failed to create GLFW window" << std::endl;
         glfwTerminate( );
-
         return EXIT_FAILURE;
     }
-
     glfwMakeContextCurrent( window );
-
     if ( GLEW_OK != glewInit( ) )
     {
         std::cout << "Failed to initialize GLEW" << std::endl;
         return EXIT_FAILURE;
     }
-
     glfwSetKeyCallback(window, keyCallback);
-
     glfwSwapInterval(1);                    //60 fps
-
     initShaders();                          //Shader initialisation
-
     glGenVertexArrays(1, &VAO);             //VERTEX ARRAY
-
     glGenBuffers(1, &VBO);                  //VERTEX BUFFER
-
-    
     glGenTextures(1,&colorTexture);
     glGenTextures(1,&heightTexture);
-
     initTexture( (char *) "height_gray_mini.jpg", 1, &textureWidth, &textureHeight ); // HEIGHT
+    //std::cout<< textureWidth << " " << textureHeight << std::endl;
     initTexture( (char *) "normal_earth_mini.jpg", 0, &textureWidth, &textureHeight ); // COLOR
-
+    //std::cout<< textureWidth << " " << textureHeight << std::endl;
+    
     glfwSetWindowSize(window, HEIGHT*textureRatio, HEIGHT);
     glfwSetWindowAspectRatio(window, HEIGHT*textureRatio, HEIGHT);
-
     createWorld();                          //CREATE THE VERTICES
-
     glBindVertexArray(VAO);
-
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * vertexCount, &vertices[0], GL_STATIC_DRAW);//Introduce the vertices to the buffer
-
     //Introduce vertice info
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, (void *) 0);
     glEnableVertexAttribArray(0); // Used for switching between vertex arrays
-
     glBindBuffer(GL_ARRAY_BUFFER, 0);
-
     glBindVertexArray(0);    
-
-    /*
-
-    //Introduce vertice attrib 2 info
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 6, (GLvoid *) (3*sizeof(GLfloat)) ));
-    glEnableVertexAttribArray(1); // Used for switching between vertex arrays
-
-    */    
-
     glUseProgram(program);
 
     mPer = glm::perspective(glm::radians(45.0f),1.0f,0.1f,1000.f);
@@ -539,13 +510,14 @@ int main()
 
     GLint textWidthLocation = glGetUniformLocation(program, "textureWidth");
     glUniform1i(textWidthLocation, textureWidth);
-
     GLint textHeightLocation = glGetUniformLocation(program, "textureHeight");
     glUniform1i(textHeightLocation, textureHeight);
 
     monitor = glfwGetPrimaryMonitor();
     mode = glfwGetVideoMode(monitor);
     glfwGetWindowSize(window, &windowWidth, &windowHeight);
+
+    glEnable(GL_DEPTH_TEST);
 
     while ( !glfwWindowShouldClose( window ) )
     {
@@ -554,7 +526,7 @@ int main()
         glViewport(0, 0, width, height);
         
         glClearColor(0.2f,0.2f,0.0f,1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
         glUseProgram(program);
         glBindVertexArray(VAO);
