@@ -57,6 +57,11 @@ GLfloat far = 1000;
 GLfloat heightFactor = 10.0f;
 
 glm::vec3* vertices;
+float vertices2[] = {
+        -0.5f, -0.5f, 0.0f, // left  
+         0.5f, -0.5f, 0.0f, // right 
+         0.0f,  0.5f, 0.0f  // top   
+    };
 
 void myPrint( const char* toprint ){
     if(DEBUG)
@@ -202,12 +207,14 @@ void initTexture(char *filename, int textureType, int *w, int *h)
 }
 
 
-void renderFragments(){
-
+void viewConfig(){
     glm::mat4 m = glm::mat4();
-    m = glm::rotate(m,(float) glfwGetTime(), glm::vec3(0,0,1) );
     int matrixLocation = glGetUniformLocation( program, "rMat" );
     glUniformMatrix4fv( matrixLocation, 1, GL_FALSE, glm::value_ptr(m) );
+}
+
+void renderFragments(){
+
     float sinVal = sin( (float) glfwGetTime() ) / 2.0f;
     int colorLocation = glGetUniformLocation( program, "ourColor" );
     glUniform4f( colorLocation, sinVal, 0.0f, 0.5f, 1.0f);
@@ -221,6 +228,28 @@ void createWorld(){
     vertices = new glm::vec3[vertexCount];
 
     int index = 0;
+    
+    //first one
+
+    vertices[index] = glm::vec3( -0.5f, -0.5f, 0.0f );                       //0
+    //std::cout << glm::to_string(vertices[index]) << std::endl;
+    vertices[index+1] = glm::vec3( 0.5f, 0.5f, 0.0f );             //1
+    //std::cout << glm::to_string(vertices[index+1]) << std::endl;                 
+    vertices[index+2] = glm::vec3( 0.5f, -0.5f, 0.0f );                 //2
+    //std::cout << glm::to_string(vertices[index+2]) << std::endl; 
+    
+    //second one
+    
+
+    vertices[index+3] = glm::vec3( -0.5f, 0.5f, 0.0f );                 //3
+    //std::cout << glm::to_string(vertices[index+3]) << std::endl; 
+    vertices[index+4] = glm::vec3( -0.5f, -0.5f, 0.0f );                     //0
+    //std::cout << glm::to_string(vertices[index+4]) << std::endl; 
+    vertices[index+5] = glm::vec3( 0.5f, 0.5f, 0.0f );             //1
+    //std::cout << glm::to_string(vertices[index+5]) << std::endl; 
+
+    /*
+    
 
     for (int i = 0; i < textureWidth; i++)
     {
@@ -228,29 +257,56 @@ void createWorld(){
            {
                 //first one
 
-                vertices[index] = glm::vec3( (float)i, 0.0f, (float) j );                       //0
+                vertices[index] = glm::vec3( i, 0, j );                       //0
                 //std::cout << glm::to_string(vertices[index]) << std::endl;
-                vertices[index+1] = glm::vec3( (float)(i+1), 0.0f, (float) (j+1) );             //1
+                vertices[index+1] = glm::vec3( (i+1), 0, (j+1) );             //1
                 //std::cout << glm::to_string(vertices[index+1]) << std::endl;                 
-                vertices[index+2] = glm::vec3( (float)(i+1), 0.0f, (float) j );                 //2
+                vertices[index+2] = glm::vec3( (i+1), 0, j );                 //2
                 //std::cout << glm::to_string(vertices[index+2]) << std::endl; 
                 
                 //second one
 
-                vertices[index+3] = glm::vec3( (float)i, 0.0f, (float) (j+1) );                 //3
+                vertices[index+3] = glm::vec3( i, 0, (j+1) );                 //3
                 //std::cout << glm::to_string(vertices[index+3]) << std::endl; 
-                vertices[index+4] = glm::vec3( (float)i, 0.0f, (float) j );                     //0
+                vertices[index+4] = glm::vec3( i, 0, j );                     //0
                 //std::cout << glm::to_string(vertices[index+4]) << std::endl; 
-                vertices[index+5] = glm::vec3( (float)(i+1), 0.0f, (float) (j+1) );             //1
+                vertices[index+5] = glm::vec3( (i+1), 0, (j+1) );             //1
                 //std::cout << glm::to_string(vertices[index+5]) << std::endl; 
 
                 index += 6;
 
            } 
     }
+    */
 
-    
+    /*
+    for (int i = 0; i < textureWidth; i++)
+    {
+        for (int j = 0; j < textureHeight; j++)
+           {
+                //first one
 
+                vertices[index] = glm::vec3( i, 0, j );                       //0
+                //std::cout << glm::to_string(vertices[index]) << std::endl;
+                vertices[index+1] = glm::vec3( (i+1), 0, (j+1) );             //1
+                //std::cout << glm::to_string(vertices[index+1]) << std::endl;                 
+                vertices[index+2] = glm::vec3( (i+1), 0, j );                 //2
+                //std::cout << glm::to_string(vertices[index+2]) << std::endl; 
+                
+                //second one
+
+                vertices[index+3] = glm::vec3( i, 0, (j+1) );                 //3
+                //std::cout << glm::to_string(vertices[index+3]) << std::endl; 
+                vertices[index+4] = glm::vec3( i, 0, j );                     //0
+                //std::cout << glm::to_string(vertices[index+4]) << std::endl; 
+                vertices[index+5] = glm::vec3( (i+1), 0, (j+1) );             //1
+                //std::cout << glm::to_string(vertices[index+5]) << std::endl; 
+
+                index += 6;
+
+           } 
+    }
+    */
 }
 
 
@@ -265,8 +321,8 @@ int main()
 
     glfwWindowHint( GLFW_CONTEXT_VERSION_MAJOR, 3 );
     glfwWindowHint( GLFW_CONTEXT_VERSION_MINOR, 3 );
-    glfwWindowHint( GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE );
-    glfwWindowHint( GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE );
+    glfwWindowHint( GLFW_OPENGL_PROFILE, GLFW_OPENGL_COMPAT_PROFILE );
+    //glfwWindowHint( GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE );
 
     glfwWindowHint( GLFW_RESIZABLE, GL_FALSE );
 
@@ -306,12 +362,16 @@ int main()
     std::cout<< vertexCount << std::endl;
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);//Introduce the vertices to the buffer
+    glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * vertexCount, &vertices[0], GL_STATIC_DRAW);//Introduce the vertices to the buffer
 
 
     //Introduce vertice info
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * vertexCount, (GLvoid *) nullptr);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, (void *) 0);
     glEnableVertexAttribArray(0); // Used for switching between vertex arrays
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    glBindVertexArray(0);    
 
     /*
 
@@ -331,6 +391,8 @@ int main()
 
     */
 
+    viewConfig();
+
     GLint textWidthLocation = glGetUniformLocation(program, "textureWidth");
     glUniform1i(textWidthLocation, textureWidth);
 
@@ -344,6 +406,9 @@ int main()
         glfwGetFramebufferSize(window, &width, &height);
         ratio = width / (float) height;
         glViewport(0, 0, width, height);
+        
+
+        glClearColor(0.2f,0.2f,0.0f,1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
         glUseProgram(program);
@@ -361,7 +426,6 @@ int main()
         */
 
         glDrawArrays(GL_TRIANGLES, 0, vertexCount);
-        glBindVertexArray(0);
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
