@@ -15,7 +15,7 @@
 #include <fstream>
 #define DEBUG 1
 
-const GLuint WIDTH = 1200, HEIGHT = 600;
+const GLuint WIDTH = 600, HEIGHT = 600;
 
 GLuint program;
 
@@ -297,6 +297,9 @@ int main()
     initTexture( (char *) "normal_earth_mini.jpg", 0, &textureWidth, &textureHeight ); // COLOR
 
     std::cout<< textureWidth << " " << textureHeight << std::endl;
+
+    glfwSetWindowSize(window, HEIGHT*textureRatio, HEIGHT);
+    glfwSetWindowAspectRatio(window, HEIGHT*textureRatio, HEIGHT);
 
     createWorld();                          //CREATE THE VERTICES
 

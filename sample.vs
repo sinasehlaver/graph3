@@ -17,6 +17,6 @@ void main()
 
 	vec4 heightVec = texture(heightTexture, textCoord);
 
-	gl_Position =  rMat * vec4(position.x, position.y, heightVec.x/20, 1.0f);
+	gl_Position =  rMat * vec4(position.x, position.y, heightVec.x/30, 1.0f);
 
 }
