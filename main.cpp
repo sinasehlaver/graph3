@@ -15,18 +15,12 @@
 #include <fstream>
 #define DEBUG 1
 
-const GLuint WIDTH = 800, HEIGHT = 600;
+const GLuint WIDTH = 1200, HEIGHT = 600;
 
 GLuint program;
 
-GLuint idProgramShader;
-GLuint idFragmentShader;
-GLuint idVertexShader;
-
 GLuint colorTexture;
 GLuint heightTexture;
-
-GLuint idMVPMatrix;
 
 int vertexCount, textureWidth, textureHeight;
 
@@ -37,31 +31,9 @@ glm::vec3 camera_up = glm::vec3(0.0, 1.0, 0.0);
 glm::vec3 camera_gaze = glm::vec3(0.0, 0.0, 1.0);
 glm::vec3 camera_cross = cross(camera_up, camera_gaze);
 
-GLfloat camera_speed = 0.0f;
-
-bool fullscreen_mode;
-
-int current_widthDisplay, current_heigthDisplay;
-
-
-GLFWmonitor* primary_monitor;
-const GLFWvidmode* vidmode;
-
-/* These four variables should have the same type due to the template argument T
-   that is used in the definition of the glm::perspective function */
-GLfloat fovy = 45; /* Set the field of view for the projection matrix */
-GLfloat aspect_ratio = 1;
-GLfloat near = 0.1;
-GLfloat far = 1000;
-
 GLfloat heightFactor = 10.0f;
 
 glm::vec3* vertices;
-float vertices2[] = {
-        -0.5f, -0.5f, 0.0f, // left  
-         0.5f, -0.5f, 0.0f, // right 
-         0.0f,  0.5f, 0.0f  // top   
-    };
 
 void myPrint( const char* toprint ){
     if(DEBUG)
@@ -221,6 +193,9 @@ void viewConfig(){
     glm::mat4 m = glm::mat4();
     m = glm::translate( m, glm::vec3( -0.5f, -0.5f, 0.0f ) );
     m = glm::scale(m, glm::vec3( 1/ float(textureWidth), 1/float(textureHeight), 1.0f ) );
+
+    m = glm::rotate( glm::mat4(1.0f), glm::radians(0.0f), glm::vec3( -1.0f, 0.0f, 0.0f ) ) * m ;
+
     std::cout<<glm::to_string(m)<<std::endl;
     int matrixLocation = glGetUniformLocation( program, "rMat" );
     glUniformMatrix4fv( matrixLocation, 1, GL_FALSE, glm::value_ptr(m) );
@@ -315,7 +290,6 @@ int main()
     glGenBuffers(1, &VBO);                  //VERTEX BUFFER
 
     
-
     glGenTextures(1,&colorTexture);
     glGenTextures(1,&heightTexture);
 

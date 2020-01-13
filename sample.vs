@@ -12,7 +12,11 @@ uniform sampler2D heightTexture;
 
 void main()
 {
-	gl_Position =  rMat * vec4(position, 1.0f);
 
 	textCoord = vec2( float(position.x - 1) / ( textureWidth + 1 ) , float(1 -position.y) / ( textureHeight + 1 )   );
+
+	vec4 heightVec = texture(heightTexture, textCoord);
+
+	gl_Position =  rMat * vec4(position.x, position.y, heightVec.x/20, 1.0f);
+
 }
