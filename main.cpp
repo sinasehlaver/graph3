@@ -26,6 +26,9 @@ int vertexCount, textureWidth, textureHeight;
 
 float textureRatio;
 
+glm::mat4 m = glm::mat4();
+
+
 glm::vec3 camera_pos;
 glm::vec3 camera_up = glm::vec3(0.0, 1.0, 0.0);
 glm::vec3 camera_gaze = glm::vec3(0.0, 0.0, 1.0);
@@ -188,17 +191,52 @@ void initTexture(char *filename, int textureType, int *w, int *h)
 }
 
 
+void rotateX(float deg){
+    glUseProgram(program);
+    m = glm::rotate( glm::mat4(1.0f), glm::radians(deg), glm::vec3( 1.0f, 0.0f, 0.0f ) ) * m ;
+}
+
+void rotateY(float deg){
+    glUseProgram(program);
+    m = glm::rotate( glm::mat4(1.0f), glm::radians(deg), glm::vec3(  0.0f, 1.0f,0.0f ) ) * m ;
+}
+
+void rotateZ(float deg){
+    glUseProgram(program);
+    m = glm::rotate( glm::mat4(1.0f), glm::radians(deg), glm::vec3(  0.0f, 0.0f,1.0f ) ) * m ;
+}
+
+
+void translate( float x, float y, float z ){
+    glUseProgram(program);
+    m = glm::translate( glm::mat4(1.0f), glm::vec3( x, y, z) ) * m;
+}
+
+void scale(float x, float y, float z){
+    glUseProgram(program);
+    m = glm::scale(m, glm::vec3( x,y,z ) );
+
+}
+
 void viewConfig(){
     glUseProgram(program);
-    glm::mat4 m = glm::mat4();
-    m = glm::translate( m, glm::vec3( -0.5f, -0.5f, 0.0f ) );
-    m = glm::scale(m, glm::vec3( 1/ float(textureWidth), 1/float(textureHeight), 1.0f ) );
 
-    m = glm::rotate( glm::mat4(1.0f), glm::radians(0.0f), glm::vec3( -1.0f, 0.0f, 0.0f ) ) * m ;
+    rotateX(-90.0f);
 
-    std::cout<<glm::to_string(m)<<std::endl;
-    int matrixLocation = glGetUniformLocation( program, "rMat" );
-    glUniformMatrix4fv( matrixLocation, 1, GL_FALSE, glm::value_ptr(m) );
+    translate( -0.5f, -0.5f, -2.0f);
+
+    scale(1/ float(textureWidth), 1/float(textureHeight), 1.0f);
+
+    
+
+    //translate(-0.5f, 0.0f, 0.0f);
+    //translate(0.0f, -0.05f, -1.0f);
+
+
+
+
+    m = glm::perspective(glm::radians(45.0f),1.0f,0.1f,1000.f) * m;
+    
 }
 
 void renderFragments(){
@@ -206,6 +244,8 @@ void renderFragments(){
     float sinVal = sin( (float) glfwGetTime() ) / 5.0f;
     int colorLocation = glGetUniformLocation( program, "ourColor" );
     glUniform4f( colorLocation, sinVal, 0.0f, 0.5f, 1.0f);
+    int matrixLocation = glGetUniformLocation( program, "rMat" );
+    glUniformMatrix4fv( matrixLocation, 1, GL_FALSE, glm::value_ptr(m) );
 
 }
 
@@ -349,6 +389,8 @@ int main()
 
         glUseProgram(program);
         glBindVertexArray(VAO);
+
+
 
         renderFragments();
 
