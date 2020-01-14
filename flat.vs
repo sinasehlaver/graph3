@@ -22,7 +22,7 @@ out vec2 textCoord;
 uniform sampler2D heightTexture;
 
 vec2 coord(float x, float z ){
-	return vec2( float(1 - x + textureOffset) / ( textureWidth + 1 ) , float(1 - z) / ( textureHeight + 1 )   );
+	return vec2( float(1 - x + textureOffset) / ( textureWidth ) , float(1 - z) / ( textureHeight )   );
 }
 
 float height( float x, float z ){
@@ -37,7 +37,7 @@ void normal(){
 
 	vec3 norm = vec3(1.0f,1.0f,0.0f);
 
-	if( position.x > 1 && position.x < textureWidth - 1 && position.z > 1 && position.z < textureHeight - 1 ){
+	if( position.x > 0 && position.x < textureWidth - 1 && position.z > 0 && position.z < textureHeight-1 ){
 
 		//vertexes that make up the adjacent faces
 

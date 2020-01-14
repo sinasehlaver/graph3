@@ -15,7 +15,7 @@
 #include "glm/gtc/matrix_inverse.hpp"
 #include "glm/gtx/rotate_vector.hpp"
 #include <fstream>
-#define DEBUG 1
+#define DEBUG 0
 
 const GLuint WIDTH = 1000, HEIGHT = 1000;
 
@@ -55,7 +55,7 @@ bool flag = false;
 GLFWwindow *window;
 
 int windowWidth, windowHeight;
-
+int prevWindowWidth, prevWindowHeight;
 
 GLFWmonitor* monitor;
 const GLFWvidmode* mode;
@@ -89,8 +89,8 @@ void initShaders()
 {
     GLuint vs,fs;
     program = glCreateProgram();
-    vs = loadShader("sample.vs", GL_VERTEX_SHADER);
-    fs = loadShader("sample.fs", GL_FRAGMENT_SHADER);
+    vs = loadShader("flat.vs", GL_VERTEX_SHADER);
+    fs = loadShader("flat.fs", GL_FRAGMENT_SHADER);
     GLint status;
     GLchar infoLog[512];
     glGetShaderiv( vs , GL_COMPILE_STATUS, &status);
@@ -325,18 +325,36 @@ void createWorld(){
 
 void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods){
 
-    bool fs = false;
     if(action == GLFW_PRESS){
         switch(key){
 
-            case GLFW_KEY_C://TODO ESCAPE
+            case GLFW_KEY_ESCAPE://TODO ESCAPE
             {
                 glfwSetWindowShouldClose(window, GLFW_TRUE);
                 break;
             }
             case GLFW_KEY_P: //fullscreen
             {
-                fs = true;
+
+                if(!flag){
+                    flag = true;
+                    prevWindowWidth = windowWidth;
+                    prevWindowHeight = windowHeight;
+                    windowHeight = mode->height;
+                    windowWidth = mode->width;
+
+                    //std::cout<<width <<" " << height<<std::endl;
+                    glfwSetWindowMonitor(window, monitor,0,0,windowWidth, windowHeight, mode->refreshRate);
+
+                }
+                else{
+                    flag = false;
+                    windowWidth = prevWindowWidth;
+                    windowHeight = prevWindowHeight;
+                    //std::cout<<width <<" " << height<<std::endl;
+
+                    glfwSetWindowMonitor(window, nullptr, 0, 0, windowWidth, windowHeight, 0);
+                }
                 break;
             }
             case GLFW_KEY_X:
@@ -352,32 +370,7 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
         }
     }
 
-    /*
-
-    if(fs){ //TODO
-        fs = false;
-        flag = true;
-        if(!fsRender){
-            fsRender = true;
-            windowHeight = mode->height;
-            windowWidth = mode->width;
-
-            //std::cout<<width <<" " << height<<std::endl;
-            glfwSetWindowMonitor(window, monitor,0,0,windowWidth, windowHeight, mode->refreshRate);
-
-        }
-        else{
-            fsRender = false;
-            windowHeight = heightDisplay;
-            windowWidth = widthDisplay;
-            //std::cout<<width <<" " << height<<std::endl;
-
-            glfwSetWindowMonitor(window, nullptr, 0, 0, windowWidth, windowHeight, 0);
-        }
-    }
-
-    */
-
+    
     if(action == GLFW_PRESS || action == GLFW_REPEAT){
         switch(key){
             case GLFW_KEY_W://camera gaze move
@@ -543,8 +536,7 @@ int main(int argc, char **argv)
 
         while ( !glfwWindowShouldClose( window ) )
         {
-            int width, height;
-            glfwGetFramebufferSize(window, &width, &height);
+
             glViewport(0, 0, windowWidth, windowHeight);
             
             glClearDepth(1.0f);

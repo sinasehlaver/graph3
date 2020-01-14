@@ -37,11 +37,11 @@ void main()
 	vec4 textureColor = texture(colorTexture , textCoord );
 
 
-	float alpha = clamp( dot( normVec, h ), 0, 1 );//Specular
-	float theta = clamp( dot( normVec, lightVec ), 0, 1 );//Diffuse
+	float alpha = clamp( dot( normVec, h ), 0.0f, 1.0f);//Specular
+	float theta = clamp( dot( normVec, lightVec ), 0.0f, 1.0f );//Diffuse
 
 	vec4 amb = ambRef * ambLight;
-	vec4 dif = difRef * difLight;
+	vec4 dif = difRef *theta* difLight;
 	vec4 spec = specRef*pow(alpha,specExp)*specLight;
 
 	vec4 comb = amb + dif + spec;
@@ -50,5 +50,5 @@ void main()
 	vec3 textColor = vec3( textureColor.x, textureColor.y, textureColor.z ) ;
 
 
-	color = vec4(clamp( comVec * textColor, 0, 1 ),1.0f);//textureColor;
+	color = vec4(clamp( textColor*comVec, 0.0f, 1.0f ),1.0f);//textureColor;
 }
