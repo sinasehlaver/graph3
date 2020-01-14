@@ -67,10 +67,126 @@ void normal(){
 
 		//norm = vec3( abs(height( position.x - 1.0f, position.z - 1.0f) - height( position.x, position.z )) ,0.0f,0.0f);
 	}
-	else{
+	else if( position.x == 0 && position.z == 0 ){ //type 0
+		float h5 = (height( position.x, position.z + 1) - height( position.x, position.z ))*heightFactor;
+		float h7 = (height( position.x + 1, position.z ) - height( position.x, position.z ))*heightFactor;
+		float h8 = (height( position.x + 1, position.z + 1) - height( position.x, position.z ))*heightFactor;
 
+		vec3 v5 = vec3(  0.0f, h5,  1.0f);
+		vec3 v7 = vec3(  1.0f, h7,  0.0f);
+		vec3 v8 = vec3(  1.0f, h8,  1.0f);
+
+		vec3 norm58 = cross( v5,v8 ); //face2
+		vec3 norm87 = cross( v8,v7 ); //face3
+
+		norm = normalize( norm58 + norm87);
+	}
+	else if( position.x == 0 && position.z > 0 && position.z < textureHeight - 1 ){//type 1
+		float h3 = (height( position.x, position.z - 1) - height( position.x, position.z ))*heightFactor;
+		float h5 = (height( position.x, position.z + 1) - height( position.x, position.z ))*heightFactor;
+		float h7 = (height( position.x + 1, position.z ) - height( position.x, position.z ))*heightFactor;
+		float h8 = (height( position.x + 1, position.z + 1) - height( position.x, position.z ))*heightFactor;
+
+		vec3 v3 = vec3(  0.0f, h3, -1.0f);
+		vec3 v5 = vec3(  0.0f, h5,  1.0f);
+		vec3 v7 = vec3(  1.0f, h7,  0.0f);
+		vec3 v8 = vec3(  1.0f, h8,  1.0f);
+
+		vec3 norm58 = cross( v5,v8 ); //face2
+		vec3 norm87 = cross( v8,v7 ); //face3
+		vec3 norm73 = cross( v7,v3 ); //face4
+
+		norm = normalize( norm58 + norm87 + norm73);
+	}
+	else if( position.x == 0 && position.z == textureHeight - 1 ){//type 2
+		float h3 = (height( position.x, position.z - 1) - height( position.x, position.z ))*heightFactor;
+		float h7 = (height( position.x + 1, position.z ) - height( position.x, position.z ))*heightFactor;
+
+		vec3 v3 = vec3(  0.0f, h3, -1.0f);
+		vec3 v7 = vec3(  1.0f, h7,  0.0f);
+
+		vec3 norm73 = cross( v7,v3 ); //face4
+
+		norm = normalize( norm73 );
+	}
+	else if( position.x > 0 && position.x < textureWidth - 1 && position.z == 0 ){//type 3
+		float h1 = (height( position.x - 1, position.z ) - height( position.x, position.z ))*heightFactor;
+		float h5 = (height( position.x, position.z + 1) - height( position.x, position.z ))*heightFactor;
+		float h7 = (height( position.x + 1, position.z ) - height( position.x, position.z ))*heightFactor;
+		float h8 = (height( position.x + 1, position.z + 1) - height( position.x, position.z ))*heightFactor;
+
+		vec3 v1 = vec3( -1.0f, h1,  0.0f);
+		vec3 v5 = vec3(  0.0f, h5,  1.0f);
+		vec3 v7 = vec3(  1.0f, h7,  0.0f);
+		vec3 v8 = vec3(  1.0f, h8,  1.0f);
+
+		vec3 norm15 = cross( v1,v5 ); //face1
+		vec3 norm58 = cross( v5,v8 ); //face2
+		vec3 norm87 = cross( v8,v7 ); //face3
+
+		norm = normalize( norm15 + norm58 + norm87 );
+	}
+	else if( position.x > 0 && position.x < textureWidth - 1 && position.z == textureHeight - 1  ){//type 5
+		float h0 = (height( position.x - 1, position.z - 1) - height( position.x, position.z ))*heightFactor;
+		float h1 = (height( position.x - 1, position.z ) - height( position.x, position.z ))*heightFactor;
+		float h3 = (height( position.x, position.z - 1) - height( position.x, position.z ))*heightFactor;
+		float h7 = (height( position.x + 1, position.z ) - height( position.x, position.z ))*heightFactor;
+
+		vec3 v0 = vec3( -1.0f, h0, -1.0f);
+		vec3 v1 = vec3( -1.0f, h1,  0.0f);
+		vec3 v3 = vec3(  0.0f, h3, -1.0f);
+		vec3 v7 = vec3(  1.0f, h7,  0.0f);
+
+		vec3 norm01 = cross( v0,v1 ); //face0
+		vec3 norm73 = cross( v7,v3 ); //face4
+		vec3 norm30 = cross( v3,v0 ); //face5
+
+		norm = normalize( norm01 + norm73 + norm30 );
+	}
+	else if( position.x == textureWidth - 1 && position.z == 0 ){//type 6
+		float h1 = (height( position.x - 1, position.z ) - height( position.x, position.z ))*heightFactor;
+		float h5 = (height( position.x, position.z + 1) - height( position.x, position.z ))*heightFactor;
+
+		vec3 v1 = vec3( -1.0f, h1,  0.0f);
+		vec3 v5 = vec3(  0.0f, h5,  1.0f);
+
+		vec3 norm15 = cross( v1,v5 ); //face1
+
+		norm = normalize(norm15);
+	}
+	else if( position.x == textureWidth - 1 && position.z > 0 && position.z < textureHeight - 1 ){//type 7
+		float h0 = (height( position.x - 1, position.z - 1) - height( position.x, position.z ))*heightFactor;
+		float h1 = (height( position.x - 1, position.z ) - height( position.x, position.z ))*heightFactor;
+		float h3 = (height( position.x, position.z - 1) - height( position.x, position.z ))*heightFactor;
+		float h5 = (height( position.x, position.z + 1) - height( position.x, position.z ))*heightFactor;
+
+		vec3 v0 = vec3( -1.0f, h0, -1.0f);
+		vec3 v1 = vec3( -1.0f, h1,  0.0f);
+		vec3 v3 = vec3(  0.0f, h3, -1.0f);
+		vec3 v5 = vec3(  0.0f, h5,  1.0f);
+
+		vec3 norm01 = cross( v0,v1 ); //face0
+		vec3 norm15 = cross( v1,v5 ); //face1
+		vec3 norm30 = cross( v3,v0 ); //face5
+
+		norm = normalize( norm01 + norm15 + norm30 );
+	}
+	else if( position.x == textureWidth - 1 && position.z == textureHeight - 1 ){//type 8
+		float h0 = (height( position.x - 1, position.z - 1) - height( position.x, position.z ))*heightFactor;
+		float h1 = (height( position.x - 1, position.z ) - height( position.x, position.z ))*heightFactor;
+		float h3 = (height( position.x, position.z - 1) - height( position.x, position.z ))*heightFactor;
+
+		vec3 v0 = vec3( -1.0f, h0, -1.0f);
+		vec3 v1 = vec3( -1.0f, h1,  0.0f);
+		vec3 v3 = vec3(  0.0f, h3, -1.0f);
+
+		vec3 norm01 = cross( v0,v1 ); //face0
+		vec3 norm30 = cross( v3,v0 ); //face5
+
+		norm = normalize( norm01 + norm30 );
+	}
+	else{		
 		float a = 0.0f;
-
 	}
 
 	vec4 temp = nMat*vec4(norm,0.0f) ;

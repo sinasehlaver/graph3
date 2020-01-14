@@ -49,7 +49,6 @@ float lightChange = 5.0f;
 int textureOffset = 0;
 int textureChange = 1;
 
-bool fsRender;
 bool flag = false;
 
 GLFWwindow *window;
@@ -233,7 +232,6 @@ void viewConfig(){
 
     cameraTarget = cameraPos + cameraGaze*(0.1f) ;
 
-
     mCam = glm::lookAt( cameraPos, cameraTarget, cameraUp ) ;
 
     mNormInv = glm::inverseTranspose(mCam);
@@ -328,7 +326,7 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
     if(action == GLFW_PRESS){
         switch(key){
 
-            case GLFW_KEY_ESCAPE://TODO ESCAPE
+            case GLFW_KEY_ESCAPE:
             {
                 glfwSetWindowShouldClose(window, GLFW_TRUE);
                 break;
@@ -499,13 +497,6 @@ int main(int argc, char **argv)
         //std::cout<< textureWidth << " " << textureHeight << std::endl;
         initTexture( argv[2], 0, &textureWidth, &textureHeight ); // COLOR
         //std::cout<< textureWidth << " " << textureHeight << std::endl;
-        
-        
-        //TODO
-        //glfwSetWindowSize(window, HEIGHT*textureRatio, HEIGHT);
-        //glfwSetWindowAspectRatio(window, HEIGHT*textureRatio, HEIGHT);
-        
-
 
         createWorld();                          //CREATE THE VERTICES
         glBindVertexArray(VAO);
