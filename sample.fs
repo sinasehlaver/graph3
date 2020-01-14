@@ -17,7 +17,10 @@ int specExp;
 vec4 difRef;
 vec4 difLight;
 
-out vec4 normVec;
+in vec3 normVec;
+in vec3 h;
+in vec3 lightVec;
+
 
 void main()
 {
@@ -33,5 +36,19 @@ void main()
 
 	vec4 textureColor = texture(colorTexture , textCoord );
 
-	color = textureColor;
+
+	float alpha = clamp( dot( normVec, h ), 0, 1 );//Specular
+	float theta = clamp( dot( normVec, lightVec ), 0, 1 );//Diffuse
+
+	vec4 amb = ambRef * ambLight;
+	vec4 dif = difRef * difLight;
+	vec4 spec = specRef*pow(alpha,specExp)*specLight;
+
+	vec4 comb = amb + dif + spec;
+
+	vec3 comVec = vec3(comb.x,comb.y,comb.z);
+	vec3 textColor = vec3( textureColor.x, textureColor.y, textureColor.z ) ;
+
+
+	color = vec4(clamp( comVec * textColor, 0, 1 ),1.0f);//textureColor;
 }

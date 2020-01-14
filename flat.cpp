@@ -216,14 +216,23 @@ void viewConfig(){
     lightPos = glm::vec3(textureWidth/2,100,textureHeight/2);
 
     cameraGaze = glm::vec3(0.0f,0.0f,1.0f);
-
-    cameraPos = glm::vec3( float(textureWidth/2), float(textureWidth/10), float(-textureWidth/4));
-
     cameraUp = glm::vec3(0.0f,1.0f,0.0f);
+
+    cameraRight = glm::cross( cameraGaze, cameraUp );
+
+
+    if(DEBUG){
+
+        cameraGaze = glm::rotate(cameraGaze, glm::radians(-45.0f), cameraRight );
+        cameraUp = glm::rotate(cameraUp, glm::radians(-45.0f), cameraRight );
+        cameraPos = glm::vec3(500.0f, 519.5f, -327.5f);
+
+    }else{
+        cameraPos = glm::vec3( float(textureWidth/2), float(textureWidth/10), float(-textureWidth/4));
+    }
 
     cameraTarget = cameraPos + cameraGaze*(0.1f) ;
 
-    cameraRight = glm::cross( cameraGaze, cameraUp );
 
     mCam = glm::lookAt( cameraPos, cameraTarget, cameraUp ) ;
 
@@ -236,6 +245,8 @@ void viewConfig(){
 void updateCamera(){
     
     cameraPos += cameraSpeed*cameraGaze;
+
+    //std::cout<<glm::to_string(cameraPos)<<std::endl;
 
     cameraTarget = cameraPos + cameraGaze*(0.1f) ;
 
@@ -269,6 +280,12 @@ void updateUniforms(){
 
     int textureOffsetlocation = glGetUniformLocation( program, "textureOffset" );
     glUniform1i( textureOffsetlocation, textureOffset );
+
+    int cameraPoslocation = glGetUniformLocation( program, "cameraPos" );
+    glUniform3fv( cameraPoslocation, 1, glm::value_ptr(cameraPos) );
+
+    int lightPoslocation = glGetUniformLocation( program, "lightPos" );
+    glUniform3fv( lightPoslocation, 1, glm::value_ptr(lightPos) );
 }
 
 void createWorld(){
@@ -285,21 +302,18 @@ void createWorld(){
            {
                 //first one
 
-                vertices[index] = glm::vec3( i, 0, j );                       //0
+                vertices[index] = glm::vec3( i, 0, j );                         //0
                 //std::cout << glm::to_string(vertices[index]) << std::endl;
-                vertices[index+1] = glm::vec3( (i+1), 0, (j+1) );             //1
+                vertices[index+1] = glm::vec3( (i+1), 0, (j+1) );               //1
                 //std::cout << glm::to_string(vertices[index+1]) << std::endl;                 
-                vertices[index+2] = glm::vec3( (i+1), 0, j);                 //2
+                vertices[index+2] = glm::vec3( (i+1), 0, j);                    //2
                 //std::cout << glm::to_string(vertices[index+2]) << std::endl; 
                 
                 //second one
 
-                vertices[index+3] = glm::vec3( i, 0, (j+1) );                 //3
-                //std::cout << glm::to_string(vertices[index+3]) << std::endl; 
-                vertices[index+4] = glm::vec3( i, 0, j);                     //0
-                //std::cout << glm::to_string(vertices[index+4]) << std::endl; 
-                vertices[index+5] = glm::vec3( (i+1), 0, (j+1));             //1
-                //std::cout << glm::to_string(vertices[index+5]) << std::endl; 
+                vertices[index+3] = glm::vec3( i, 0, (j+1) );                   //3
+                vertices[index+4] = glm::vec3( (i+1), 0, (j+1));                //1
+                vertices[index+5] = glm::vec3( i, 0, j);                        //0
 
                 index += 6;
 
@@ -393,7 +407,7 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
             case GLFW_KEY_Q: //texture map move
             {
                 textureOffset += textureChange;
-                std::cout<<textureOffset<<std::endl;
+                //std::cout<<textureOffset<<std::endl;
                 break;
             }
             case GLFW_KEY_E:
@@ -413,12 +427,12 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
             }
             case GLFW_KEY_LEFT:
             {
-                lightPos.x -= lightChange; 
+                lightPos.x += lightChange; 
                 break;
             }
             case GLFW_KEY_RIGHT:
             {
-                lightPos.x += lightChange;
+                lightPos.x -= lightChange;
                 break;
             }
             case GLFW_KEY_T:
@@ -534,7 +548,7 @@ int main(int argc, char **argv)
             glViewport(0, 0, windowWidth, windowHeight);
             
             glClearDepth(1.0f);
-            glClearColor(0.2f,0.2f,0.0f,1.0f);
+            glClearColor(0.0f,0.0f,0.0f,1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
             glUseProgram(program);
