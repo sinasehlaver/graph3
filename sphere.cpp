@@ -171,7 +171,6 @@ void initTexture(char *filename, int textureType, int *w, int *h)
     if (textureType == 0){
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, colorTexture);
-
         GLint colorTextLocation = glGetUniformLocation(program, "colorTexture");
         glUniform1i(colorTextLocation, 0);
 
@@ -301,7 +300,7 @@ void createWorld(){
     float v0, v1, v2, v3;
 
 
-    for (int i = 0; i <= verticalCount; i++) //TODO EQUAL
+    for (int i = 0; i < verticalCount; i++) //TODO EQUAL
     {
 
         beta0 = i * verticalStep;
@@ -316,7 +315,7 @@ void createWorld(){
         beta3 = (i+1) * verticalStep;
         v3 = float(i+1) / verticalCount;
 
-        for (int j = 0; j <= horizontalCount; j++)
+        for (int j = 0; j < horizontalCount; j++)
            {
 
                 alpha0 = j * horizontalStep;
@@ -527,8 +526,8 @@ int main(int argc, char **argv)
         glGenTextures(1,&colorTexture);
         glGenTextures(1,&heightTexture);
         
-        //initTexture( argv[1], 1, &textureWidth, &textureHeight ); // HEIGHT TODO
-        //initTexture( argv[2], 0, &textureWidth, &textureHeight ); // COLOR TODO
+        initTexture( argv[1], 1, &textureWidth, &textureHeight ); // HEIGHT TODO
+        initTexture( argv[2], 0, &textureWidth, &textureHeight ); // COLOR TODO
 
         createWorld();                          //CREATE THE VERTICES
         glBindVertexArray(VAO);

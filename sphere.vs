@@ -45,6 +45,8 @@ void main()
 
 	textCoord = vec2(position.z, position.w);
 
-	gl_Position =  vpMat * vec4( posCalc( position.x, position.y ) , 1.0f);
+	vec3 reelPos = posCalc( position.x, position.y );
+
+	gl_Position =  vpMat * vec4( reelPos, 1.0f);
 
 }

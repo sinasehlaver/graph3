@@ -34,7 +34,7 @@ void main()
 	difRef = vec4(1.0f,1.0f,1.0f,1.0f);
 	difLight = vec4(1.0f,1.0f,1.0f,1.0f);
 
-	vec4 textureColor = texture(colorTexture , vec2(0.2f,0.2f) );
+	vec4 textureColor = texture(colorTexture , textCoord );
 
 	float alpha = clamp( dot( normVec, h ), 0.0f, 1.0f);//Specular
 	float theta = clamp( dot( normVec, lightVec ), 0.0f, 1.0f );//Diffuse
